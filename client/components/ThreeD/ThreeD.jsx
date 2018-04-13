@@ -10,7 +10,6 @@ class ThreeD extends Component {
     this.start = this.start.bind(this)
     this.animate = this.animate.bind(this)
     this.handleLoad = this.handleLoad.bind(this)
-    // this.checkForVideo = this.checkForVideo.bind(this)
     this.onWindowResize = this.onWindowResize.bind(this)
   }
 
@@ -47,6 +46,11 @@ class ThreeD extends Component {
     camera.aspect = window.innerWidth / window.innerHeight
     camera.updateProjectionMatrix()
 
+    // Object Camera
+    const objCam = new THREE.CubeCamera(0.1, 5000, 512)
+    objCam.position.set(0, 0, 0)
+    scene.add(objCam)
+
     // renderer
     const renderer = new THREE.WebGLRenderer({
       alpha: true,
@@ -61,41 +65,35 @@ class ThreeD extends Component {
 
     // model loader
     const loader = new THREE.JSONLoader()
-    loader.load('/models/baymax.json', this.handleLoad)
+    loader.load('/models/motorcycle.json', this.handleLoad)
 
     // light1
-    const light = new THREE.DirectionalLight(0xffffff, 2.0, 600)
+    const light = new THREE.PointLight(0xffffff, 2.0, 600)
     light.position.y = 50
     light.position.x = -45
     scene.add(light)
     // light2
-    const light2 = new THREE.DirectionalLight(0xffffff, 1.0, 600)
+    const light2 = new THREE.PointLight(0xffffff, 1.0, 600)
     light2.position.y = 50
     light2.position.x = -50
     scene.add(light2)
+    // light3
+    const light3 = new THREE.PointLight(0xffffff, 1.0, 600)
+    light3.position.y = -50
+    light3.position.x = -50
+    scene.add(light3)
     // ambient Light
-    // const ambient = new THREE.AmbientLight(0xffffff)
-    // scene.add(ambient)
+    const ambient = new THREE.AmbientLight(0xffffff)
+    scene.add(ambient)
 
     // window resizing
     window.addEventListener('resize', this.onWindowResize, false)
 
-    // regular texture
+    // regular material
     const regMaterial = new THREE.MeshPhongMaterial({color: '#AA6C39', shininess: 30})
-
-    // // Video texture
-    // const video = document.createElement('video')
-    // video.src = this.props.videoLink
-    // video.setAttribute('crossorigin', 'anonymous')
-    // video.autoplay = true
-    // video.load()
-    // video.play()
-    // const videoTexture = new THREE.VideoTexture(video)
-    // videoTexture.minFilter = THREE.LinearFilter
-    // videoTexture.magFilter = THREE.LinearFilter
-    // videoTexture.format = THREE.RGBFormat
-    // const movieMaterial = new THREE.MeshPhongMaterial({map: videoTexture, overdraw: true, side: THREE.DoubleSide})
-    // movieMaterial.map.needsUpdate = true
+    regMaterial.reflectivity = 20
+    // mirror material
+    const mirrorMaterial = new THREE.MeshBasicMaterial({envMap: objCam.renderTarget.texture})
 
     // controls
     this.controls = new OrbitControls(camera)
@@ -111,14 +109,13 @@ class ThreeD extends Component {
     this.controls.target.set(0, 0, 0)
 
     // attachments
-    // this.video = video
     this.scene = scene
     this.camera = camera
     this.loader = loader
+    this.objCam = objCam
     this.renderer = renderer
-    // this.movieMaterial = movieMaterial
-    // this.checkedMovieMaterial = this.checkForVideo(video, movieMaterial)
     this.regMaterial = regMaterial
+    this.mirrorMaterial = mirrorMaterial
 
     this.mount.appendChild(this.renderer.domElement)
     this.start()
@@ -140,29 +137,8 @@ class ThreeD extends Component {
     this.mount.removeChild(this.renderer.domElement)
   }
 
-  // checkForVideo (video, movieMaterial) {
-  //   if (video.src !== 'http://localhost:3000/undefined') {
-  //     return movieMaterial
-  //   } else return null
-  // }
-
-  // componentWillReceiveProps (nextProps) {
-  //   if (this.props.videoLink !== nextProps.videoLink) {
-  //     this.video.src = nextProps.videoLink
-  //     this.mesh.needsUpdate = true
-  //     // this.componentDidMount()
-  //   }
-  // }
-
-  // handleLoad (geometry, materials) {
-  //   const mesh = new THREE.Mesh(geometry, this.checkedMovieMaterial || this.regMaterial)
-  //   this.mesh = mesh
-  //   this.scene.add(this.mesh)
-  // }
-
   handleLoad (geometry, materials) {
-    const mesh = new THREE.Mesh(geometry, this.regMaterial)
-    this.mesh = mesh
+    this.mesh = new THREE.Mesh(geometry, this.mirrorMaterial)
     this.scene.add(this.mesh)
   }
 
@@ -183,6 +159,11 @@ class ThreeD extends Component {
   }
 
   renderScene () {
+    if (this.mesh) {
+      this.mesh.visible = false
+      this.objCam.updateCubeMap(this.renderer, this.scene)
+      this.mesh.visible = true
+    }
     this.renderer.render(this.scene, this.camera)
   }
 
@@ -196,11 +177,4 @@ class ThreeD extends Component {
   }
 }
 
-// function mapStateToProps (state) {
-//   return {
-//     videoLink: state.setVideo.videoLink
-//   }
-// }
-
-// export default connect(mapStateToProps)(ThreeD)
 export default ThreeD
