@@ -17,7 +17,7 @@ class ThreeD extends Component {
     const myCanvas = document.getElementById('myCanvas')
 
     // cubemap
-    const path = '/images/'
+    const path = './images/'
     const format = '.png'
     const urls = [
       path + 'px' + format, path + 'nx' + format,
@@ -65,7 +65,7 @@ class ThreeD extends Component {
 
     // model loader
     const loader = new THREE.JSONLoader()
-    loader.load('/models/motorcycle.json', this.handleLoad)
+    loader.load('./models/motorcycle.json', this.handleLoad)
 
     // light1
     const light = new THREE.PointLight(0xffffff, 2.0, 600)
